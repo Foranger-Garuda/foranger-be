@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 
@@ -23,7 +23,7 @@ class CropRecommendation(db.Model):
     estimated_cost_per_hectare = db.Column(db.Numeric(precision=12, scale=2), nullable=True)
     estimated_revenue_per_hectare = db.Column(db.Numeric(precision=12, scale=2), nullable=True)
     market_demand_level = db.Column(db.String, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     crop_prediction = db.relationship('CropPrediction', backref=db.backref('crop_recommendations', lazy=True))

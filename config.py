@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 class Config:
     # Apis creds
@@ -8,6 +9,9 @@ class Config:
     
     # Flask
     SECRET_KEY = os.environ.get("SECRET_KEY", "your-secret-key-change-this-in-production")
+
+    #access token
+    ACCESS_TOKEN_EXPIRES = timedelta(seconds=int(os.getenv("ACCESS_TOKEN_EXPIRES", 86400)))
 
     # Database - Supabase PostgreSQL
     DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://postgres:your_password@db.bzrntelwhrhrkyvtqysh.supabase.co:5432/postgres")

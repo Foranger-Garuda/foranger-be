@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 
@@ -19,7 +19,7 @@ class WeatherData(db.Model):
     season = db.Column(db.String, nullable=True)
     weather_warnings = db.Column(db.Text, nullable=True)
     data_source = db.Column(db.String, nullable=True)
-    fetched_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    fetched_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 
@@ -11,7 +11,7 @@ class SoilPhoto(db.Model):
     photo_url = db.Column(db.String, nullable=True)
     photo_filename = db.Column(db.String, nullable=True)
     analysis_result = db.Column(db.JSON, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     soil_analysis = db.relationship('SoilAnalysis', backref=db.backref('soil_photos', lazy=True))

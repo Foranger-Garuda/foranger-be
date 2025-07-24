@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 
@@ -22,7 +22,7 @@ class SoilAnalysis(db.Model):
     classified_soil_type = db.Column(db.String, nullable=True)
     classification_confidence = db.Column(db.String, nullable=True)
     classification_method = db.Column(db.String, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     claude_api_calls = db.Column(db.Integer, nullable=True)
     ip_address = db.Column(db.String, nullable=True)
 

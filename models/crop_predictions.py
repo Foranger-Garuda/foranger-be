@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, date
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID
 from app.extensions import db
 
@@ -19,7 +19,7 @@ class CropPrediction(db.Model):
     expected_harvest_date = db.Column(db.Date, nullable=True)
     planting_window_start = db.Column(db.Date, nullable=True)
     planting_window_end = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     soil_analysis = db.relationship('SoilAnalysis', backref=db.backref('crop_predictions', lazy=True))

@@ -181,7 +181,7 @@ class ClaudeService:
             # Historical weather summary
             historical_section = ""
             if weather_data.get('location'):
-                from .services import weather_service
+                from .services_temp import weather_service
                 lat = weather_data['location']['lat']
                 lon = weather_data['location']['lon']
                 historical_section = "\n\nHistorical Weather (same week, past 3 years):\n" + weather_service.get_historical_weather_summary(lat, lon, years=3)

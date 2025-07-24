@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_migrate import Migrate
-from app.extensions import db
+from app.extensions import db, jwt
 from app.routes import main_bp
 from models import *
 
@@ -11,8 +11,9 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate = Migrate(app, db)
+    jwt.init_app(app)
     
     # Register blueprints
-    app.register_blueprint(main_bp)
+    app.register_blueprint(main_bp) 
 
     return app

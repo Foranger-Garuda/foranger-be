@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from werkzeug.utils import secure_filename
 import os
 from .services import claude_service, weather_service
+from app.services_temp.auth_service import login_user, register_user
 
 main_bp = Blueprint("main", __name__)
 
@@ -341,3 +342,32 @@ def get_crop_recommendations_with_soil_file():
         })
     else:
         return jsonify({"error": crop_result['error']}), 500
+    
+@main_bp.route('/authentication/login', methods=['POST'])
+def login_user_route():
+    data = request.get_json(silent=True)  
+    
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({"error": "Email and password are required"}), 400
+
+    result = login_user(data)
+    
+    if result.get('status') == 200:
+        return jsonify(result), 200
+    else:
+        return jsonify({"error": result['message']}), result['status']
+    
+@main_bp.route('/authentication/register', methods=['POST'])
+def register_user_route():
+    data = request.get_json(silent=True)  
+    
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({"error": "Email and password are required"}), 400
+
+    result = register_user(data)
+    
+    if result.get('status') == 201:
+        return jsonify(result), 201
+    else:
+        return jsonify({"error": result['message']}), result['status']
+
