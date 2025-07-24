@@ -1,0 +1,48 @@
+name: Deploy to Tencent Lighthouse via SSH
+
+on:
+  push:
+    branches: [master]  # Ganti sesuai branch deploy kamu
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.1'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Setup SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TENCENT_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.LIGHTHOUSE_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy project to Lighthouse
+        run: |
+          rsync -avz --exclude 'env/' --exclude '__pycache__/' ./ ${{ secrets.TENCENT_USER }}@${{ secrets.LIGHTHOUSE_HOST }}:/home/${{ secrets.TENCENT_USER }}/gro
+
+      - name: Remote deploy commands
+        run: |
+          ssh ${{ secrets.TENCENT_USER }}@${{ secrets.LIGHTHOUSE_HOST }} << 'EOF'
+          cd ~/gro
+          python3 -m venv env || true
+          source env/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          # Jalankan app Flask
+          pkill -f run.py || true
+          nohup env/bin/python run.py &
+          EOF
+
