@@ -5,6 +5,7 @@ from .soil_analyses import SoilAnalysis
 from .soil_photos import SoilPhoto
 from .soil_type_reference import SoilTypeReference
 from .weather_data import WeatherData
+from .blacklisted_token import BlacklistedToken
 
 __all__ = [
     'User',

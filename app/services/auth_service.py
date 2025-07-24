@@ -2,7 +2,43 @@ from datetime import datetime, timezone
 from app.extensions import db
 from models.users import User
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask import current_app
+from models.blacklisted_token import BlacklistedToken
+
+# In-memory blacklist for demonstration (use persistent storage in production)
+JWT_BLACKLIST = set()
+
+def create_tokens(user):
+    access_token = create_access_token(
+        identity=str(user.id),
+        additional_claims={"is_admin": user.is_admin}
+    )
+    refresh_token = create_refresh_token(identity=str(user.id))
+    return access_token, refresh_token
+
+def refresh_access_token(identity):
+    user = User.query.get(identity)
+    if not user:
+        return None
+    access_token = create_access_token(
+        identity=str(user.id),
+        additional_claims={"is_admin": user.is_admin}
+    )
+    return access_token
+
+def logout_token(jti):
+    # Add the token's jti to the database blacklist
+    if not BlacklistedToken.query.filter_by(jti=jti).first():
+        blacklisted = BlacklistedToken(jti=jti)
+        db.session.add(blacklisted)
+        db.session.commit()
+    return True
+
+def is_token_revoked(jwt_payload):
+    jti = jwt_payload["jti"]
+    return BlacklistedToken.query.filter_by(jti=jti).first() is not None
 
 def login_user(data):
     email = data.get('email')

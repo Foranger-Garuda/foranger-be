@@ -3,6 +3,7 @@ from flask_migrate import Migrate
 from app.extensions import db, jwt
 from app.routes import main_bp
 from models import *
+from app.services.auth_service import is_token_revoked
 
 def create_app():
     app = Flask(__name__)
@@ -12,6 +13,10 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     jwt.init_app(app)
+
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        return is_token_revoked(jwt_payload)
     
     # Register blueprints
     app.register_blueprint(main_bp) 
