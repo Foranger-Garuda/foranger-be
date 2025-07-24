@@ -28,8 +28,13 @@ def login_user(data):
     user.last_login_at = datetime.now(timezone.utc)
     db.session.commit()
 
-    # Create JWT token
-    access_token = create_access_token(identity=str(user.id))
+    # Create JWT token with is_admin claim
+    access_token = create_access_token(
+        identity=str(user.id),
+        additional_claims={
+            "is_admin": user.is_admin
+        }
+    )
 
     user_info = {
         'id': str(user.id),
@@ -37,7 +42,8 @@ def login_user(data):
         'full_name': user.full_name,
         'province': user.province,
         'city': user.city,
-        'last_login_at': user.last_login_at.isoformat()
+        'last_login_at': user.last_login_at.isoformat(),
+        'is_admin': user.is_admin
     }
 
     return {
