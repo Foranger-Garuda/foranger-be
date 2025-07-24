@@ -1,16 +1,18 @@
 from flask import Flask
+from flask_migrate import Migrate
 from app.extensions import db
 from app.routes import main_bp
-from models import *  # import all models so db.create_all works
+from models import *
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object("config.Config")
 
+    # Initialize extensions
     db.init_app(app)
+    migrate = Migrate(app, db)
+    
+    # Register blueprints
     app.register_blueprint(main_bp)
-
-    # with app.app_context():
-    #     db.create_all()  # Optional: auto-create tables on startup
 
     return app
