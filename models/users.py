@@ -13,6 +13,7 @@ class User(db.Model):
     password_hash = db.Column(db.String, nullable=False)
     province = db.Column(db.String, nullable=True)
     city = db.Column(db.String, nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.timezone.utc))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(datetime.timezone.utc), onupdate=lambda: datetime.now(datetime.timezone.utc))
     last_login_at = db.Column(db.DateTime, nullable=True)
