@@ -1,8 +1,8 @@
-name: Deploy to Tencent Lighthouse via SSH
+name: Deploy Flask App to Tencent Lighthouse
 
 on:
   push:
-    branches: [master]  # Ganti sesuai branch deploy kamu
+    branches: [master]
 
 jobs:
   build-and-deploy:
@@ -31,18 +31,36 @@ jobs:
 
       - name: Copy project to Lighthouse
         run: |
-          rsync -avz --exclude 'env/' --exclude '__pycache__/' ./ ${{ secrets.TENCENT_USER }}@${{ secrets.LIGHTHOUSE_HOST }}:/home/${{ secrets.TENCENT_USER }}/gro
+          rsync -avz --exclude 'env/' --exclude '__pycache__/' --exclude '.git/' ./ ${{ secrets.TENCENT_USER }}@${{ secrets.LIGHTHOUSE_HOST }}:/home/${{ secrets.TENCENT_USER }}/gro
 
-      - name: Remote deploy commands
+      - name: Deploy and setup services
         run: |
           ssh ${{ secrets.TENCENT_USER }}@${{ secrets.LIGHTHOUSE_HOST }} << 'EOF'
           cd ~/gro
+          
+          # Setup Python environment
           python3 -m venv env || true
           source env/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-          # Jalankan app Flask
-          pkill -f run.py || true
-          nohup env/bin/python run.py &
+          pip install gunicorn  # Production WSGI server
+          
+          # Stop existing processes
+          pkill -f "gunicorn.*run:app" || true
+          pkill -f "python.*run.py" || true
+          
+          # Start Flask app with Gunicorn (production server)
+          nohup env/bin/gunicorn --bind 127.0.0.1:5000 --workers 2 --timeout 300 run:app > ~/gro/app.log 2>&1 &
+          
+          # Wait a moment for the app to start
+          sleep 3
+          
+          # Check if app is running
+          if curl -f http://127.0.0.1:5000/ > /dev/null 2>&1; then
+            echo "✅ Flask app is running successfully on port 5000"
+          else
+            echo "❌ Flask app failed to start"
+            tail -20 ~/gro/app.log
+            exit 1
+          fi
           EOF
-
