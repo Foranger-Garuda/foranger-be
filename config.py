@@ -1,6 +1,11 @@
 import os
 
 class Config:
+    # Apis creds
+    CLAUDE_API_KEY = os.getenv('CLAUDE_API_KEY')
+    CLAUDE_API_BASE_URL = os.getenv('CLAUDE_API_BASE_URL', 'https://api.anthropic.com')
+    OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY')
+    
     # Flask
     SECRET_KEY = os.environ.get("SECRET_KEY", "your-secret-key-change-this-in-production")
 
