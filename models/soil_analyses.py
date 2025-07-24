@@ -31,3 +31,23 @@ class SoilAnalysis(db.Model):
 
     def __repr__(self):
         return f"<SoilAnalysis {self.id} - User: {self.user_id}>"
+
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "user_id": str(self.user_id),
+            "soil_type_reference_id": str(self.soil_type_reference_id) if self.soil_type_reference_id else None,
+            "soil_color": self.soil_color,
+            "soil_texture": self.soil_texture,
+            "soil_drainage": self.soil_drainage,
+            "soil_location_type": self.soil_location_type,
+            "soil_fertility": self.soil_fertility,
+            "soil_moisture": self.soil_moisture,
+            "classified_soil_type": self.classified_soil_type,
+            "classification_confidence": self.classification_confidence,
+            "classification_method": self.classification_method,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "ip_address": self.ip_address,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }

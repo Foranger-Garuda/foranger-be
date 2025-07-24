@@ -188,6 +188,13 @@ class ClaudeService:
             summary += "\nRain events: " + "; ".join(rain_events[:3])
         return summary
 
+    def _infer_indonesia_season(self, month):
+        """Return 'Rainy Season' for Nov-Apr, 'Dry Season' for May-Oct."""
+        if month in [11, 12, 1, 2, 3, 4]:
+            return "Rainy Season"
+        else:
+            return "Dry Season"
+
     def get_crop_recommendations(self, weather_data, soil_data=None, model="claude-3-5-sonnet-20241022", max_tokens=2000):
         try:
             if not weather_data["success"]:
@@ -217,38 +224,29 @@ class ClaudeService:
             # Historical weather summary
             historical_section = ""
             if weather_data.get('location'):
-                from .services import weather_service
+                from app.services.weather_service import WeatherService
                 lat = weather_data['location']['lat']
                 lon = weather_data['location']['lon']
-                historical_section = "\n\nHistorical Weather (same week, past 3 years):\n" + weather_service.get_historical_weather_summary(lat, lon, years=3)
-            prompt = f"""
-            Based on the following comprehensive weather data{' and soil analysis' if soil_data else ''}, please provide detailed crop planting recommendations for Indonesia:
-
-            Location: {weather_data['location']['name']}, {weather_data['location']['country']}
-            Coordinates: {weather_data['location']['lat']}, {weather_data['location']['lon']}
-            Timezone: {weather_data.get('timezone', 'UTC')}
-
-            Current Weather Conditions:
-            - Temperature: {weather_data['current']['temperature']:.1f}°C (feels like {weather_data['current']['feels_like']:.1f}°C)
-            - Humidity: {weather_data['current']['humidity']}%
-            - Pressure: {weather_data['current']['pressure']} hPa
-            - Weather: {weather_data['current']['weather']} ({weather_data['current']['weather_main']})
-            - Wind Speed: {weather_data['current']['wind_speed']} m/s
-            - UV Index: {weather_data['current']['uv_index']}
-            - Cloud Coverage: {weather_data['current']['clouds']}%
-            - Visibility: {weather_data['current']['visibility']:.1f} km{f"- Recent Rain: {weather_data['current'].get('rain_1h', 0)} mm/h" if weather_data['current'].get('rain_1h') else ""}{forecast_section}{hourly_section}{alerts_section}{historical_section}{soil_section}
-
-            Please provide comprehensive recommendations including:
-            1. **Recommended Crops**: Best crops to plant now considering current season, weather patterns{', and soil compatibility' if soil_data else ''}
-            2. **Planting Strategy**: \n   - Optimal planting timing based on weather forecast\n   - Pre-planting soil preparation{' considering soil type' if soil_data else ''}\n   - Seed selection and treatment recommendations
-            3. **Weather-Based Care**:\n   - Irrigation schedule based on rainfall forecast and humidity\n   - Protection measures for extreme weather (if alerts present)\n   - UV protection strategies if needed
-            4. **Growing Timeline**: Expected planting-to-harvest timeline with key milestones
-            5. **Risk Assessment**: \n   - Weather-related risks from forecast\n   - Mitigation strategies\n   - Alternative crop options if conditions deteriorate
-            6. **Fertilization & Care**:\n   - NPK requirements{' based on soil analysis' if soil_data else ''}\n   - Organic matter recommendations\n   - Pest and disease prevention in current conditions
-            7. **Harvest Planning**: Expected yield and harvest timing based on weather patterns
-
-            Focus specifically on crops suitable for Indonesian climate and commonly grown by local farmers. Consider tropical/subtropical conditions, monsoon patterns, and local agricultural practices.
-            """
+                weather_service_instance = WeatherService()
+                historical_section = "\n\nHistorical Weather (same week, past 3 years):\n" + weather_service_instance.get_historical_weather_summary(lat, lon, years=3)
+            # --- Add season info ---
+            import datetime as dt
+            now = dt.datetime.now()
+            season = self._infer_indonesia_season(now.month)
+            concise_json_prompt = (
+                "Given the following data for a location in Indonesia, return ONLY a single JSON object with these keys: "
+                "'recommendations' (array of objects, each with: crop_name, crop_category, suitability_score, suitability_level, planting_method, spacing_recommendation, seed_variety_suggestions, expected_yield_per_hectare, fertilizer_schedule, watering_schedule, pest_control_measures, harvesting_indicators, estimated_cost_per_hectare, estimated_revenue_per_hectare, market_demand_level, best_planting_date, expected_harvest_date, planting_window_start, planting_window_end), "
+                "'seasonal_advice', 'weather_warnings', 'soil_treatments', 'risk_factors', 'success_probability', 'best_planting_date', 'expected_harvest_date', 'planting_window_start', 'planting_window_end'. "
+                "All dates must be in ISO 8601 format (YYYY-MM-DD). Do NOT include any explanation, markdown, or text outside the JSON object.\n"
+                f"Location: {weather_data['location']['name']}, {weather_data['location']['country']}\n"
+                f"Coordinates: {weather_data['location']['lat']}, {weather_data['location']['lon']}\n"
+                f"Timezone: {weather_data.get('timezone', 'UTC')}\n"
+                f"Season: {season}\n"
+                f"Current Weather: {weather_data['current']}\n"
+                f"7-Day Forecast: {weather_data.get('daily_forecast', [])}\n"
+                f"Soil Analysis: {soil_data['soil_analysis'] if soil_data else ''}"
+            )
+            prompt = concise_json_prompt
             client = self._get_client()
             response = client.messages.create(
                 model=model,

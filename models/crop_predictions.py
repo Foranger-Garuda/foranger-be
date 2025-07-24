@@ -27,4 +27,22 @@ class CropPrediction(db.Model):
     def __repr__(self):
         return f"<CropPrediction {self.id} - SoilAnalysis: {self.soil_analysis_id}>"
 
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "soil_analysis_id": str(self.soil_analysis_id),
+            "weather_data_id": str(self.weather_data_id) if self.weather_data_id else None,
+            "recommended_crops": self.recommended_crops,
+            "seasonal_advice": self.seasonal_advice,
+            "weather_warnings": self.weather_warnings,
+            "soil_treatments": self.soil_treatments,
+            "risk_factors": self.risk_factors,
+            "success_probability": self.success_probability,
+            "best_planting_date": self.best_planting_date.isoformat() if self.best_planting_date else None,
+            "expected_harvest_date": self.expected_harvest_date.isoformat() if self.expected_harvest_date else None,
+            "planting_window_start": self.planting_window_start.isoformat() if self.planting_window_start else None,
+            "planting_window_end": self.planting_window_end.isoformat() if self.planting_window_end else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
    

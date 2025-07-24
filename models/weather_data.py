@@ -25,4 +25,21 @@ class WeatherData(db.Model):
     def __repr__(self):
         return f"<WeatherData {self.id} - {self.latitude},{self.longitude}>"
 
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "current_temperature": self.current_temperature,
+            "current_humidity": self.current_humidity,
+            "current_rainfall": self.current_rainfall,
+            "current_wind_speed": self.current_wind_speed,
+            "current_pressure": self.current_pressure,
+            "forecast_7days": self.forecast_7days,
+            "season": self.season,
+            "weather_warnings": self.weather_warnings,
+            "data_source": self.data_source,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
    

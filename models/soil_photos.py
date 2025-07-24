@@ -7,7 +7,7 @@ class SoilPhoto(db.Model):
     __tablename__ = "soil_photos"
 
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    soil_analysis_id = db.Column(UUID(as_uuid=True), db.ForeignKey('soil_analyses.id'), nullable=False)
+    soil_analysis_id = db.Column(UUID(as_uuid=True), db.ForeignKey('soil_analyses.id'), nullable=True)
     photo_url = db.Column(db.String, nullable=True)
     photo_filename = db.Column(db.String, nullable=True)
     analysis_result = db.Column(db.JSON, nullable=True)
