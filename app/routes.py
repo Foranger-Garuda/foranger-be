@@ -823,8 +823,68 @@ def get_user_crop_recommendations():
     from models.crop_recommendations import CropRecommendation
     from models.crop_predictions import CropPrediction
     from models.soil_analyses import SoilAnalysis
+    from models.soil_photos import SoilPhoto
     recs = CropRecommendation.query.join(CropPrediction).join(SoilAnalysis).filter(SoilAnalysis.user_id == user_id).all()
-    return jsonify([r.to_dict() for r in recs])
+    enriched = []
+    for r in recs:
+        prediction = r.crop_prediction
+        soil_analysis = prediction.soil_analysis if prediction else None
+        soil_photo = None
+        if soil_analysis:
+            photo_obj = SoilPhoto.query.filter_by(soil_analysis_id=soil_analysis.id).first()
+            if photo_obj:
+                soil_photo = {"photo_url": photo_obj.photo_url, "photo_filename": photo_obj.photo_filename}
+        # Try to get weather_summary and soil_analysis_summary from prediction if available
+        weather_summary = None
+        soil_analysis_summary = None
+        if prediction:
+            if hasattr(prediction, 'weather_summary'):
+                weather_summary = getattr(prediction, 'weather_summary', None)
+            if hasattr(prediction, 'soil_analysis_summary'):
+                soil_analysis_summary = getattr(prediction, 'soil_analysis_summary', None)
+        enriched.append({
+            "recommendation": r.to_dict(),
+            "prediction": prediction.to_dict() if prediction else None,
+            "soil_analysis": soil_analysis.to_dict() if soil_analysis else None,
+            "soil_photo": soil_photo,
+            "weather_summary": weather_summary,
+            "soil_analysis_summary": soil_analysis_summary
+        })
+    return jsonify(enriched)
+
+@main_bp.route("/user/crop-recommendations/<rec_id>", methods=["GET"])
+@jwt_required()
+def get_user_crop_recommendation_detail(rec_id):
+    user_id = get_jwt_identity()
+    from models.crop_recommendations import CropRecommendation
+    from models.crop_predictions import CropPrediction
+    from models.soil_analyses import SoilAnalysis
+    from models.soil_photos import SoilPhoto
+    rec = CropRecommendation.query.filter_by(id=rec_id).first()
+    if not rec:
+        return {"error": "Recommendation not found"}, 404
+    prediction = rec.crop_prediction
+    soil_analysis = prediction.soil_analysis if prediction else None
+    soil_photo = None
+    if soil_analysis:
+        photo_obj = SoilPhoto.query.filter_by(soil_analysis_id=soil_analysis.id).first()
+        if photo_obj:
+            soil_photo = {"photo_url": photo_obj.photo_url, "photo_filename": photo_obj.photo_filename}
+    weather_summary = None
+    soil_analysis_summary = None
+    if prediction:
+        if hasattr(prediction, 'weather_summary'):
+            weather_summary = getattr(prediction, 'weather_summary', None)
+        if hasattr(prediction, 'soil_analysis_summary'):
+            soil_analysis_summary = getattr(prediction, 'soil_analysis_summary', None)
+    return {
+        "recommendation": rec.to_dict(),
+        "prediction": prediction.to_dict() if prediction else None,
+        "soil_analysis": soil_analysis.to_dict() if soil_analysis else None,
+        "soil_photo": soil_photo,
+        "weather_summary": weather_summary,
+        "soil_analysis_summary": soil_analysis_summary
+    }
 
 @main_bp.route("/user/weather-data", methods=["GET"])
 @jwt_required()
