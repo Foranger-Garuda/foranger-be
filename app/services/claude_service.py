@@ -232,8 +232,10 @@ class ClaudeService:
             # --- Add season info ---
             import datetime as dt
             now = dt.datetime.now()
+            today_str = now.strftime("%Y-%m-%d")
             season = self._infer_indonesia_season(now.month)
             concise_json_prompt = (
+                f"Today is: {today_str}\n"  # Explicitly tell the LLM the current date
                 "Given the following data for a location in Indonesia, return ONLY a single JSON object with these keys: "
                 "'recommendations' (array of objects, each with: crop_name, crop_category, suitability_score, suitability_level, planting_method, spacing_recommendation, seed_variety_suggestions, expected_yield_per_hectare, fertilizer_schedule, watering_schedule, pest_control_measures, harvesting_indicators, estimated_cost_per_hectare, estimated_revenue_per_hectare, market_demand_level, best_planting_date, expected_harvest_date, planting_window_start, planting_window_end), "
                 "'seasonal_advice', 'weather_warnings', 'soil_treatments', 'risk_factors', 'success_probability', 'best_planting_date', 'expected_harvest_date', 'planting_window_start', 'planting_window_end'. "

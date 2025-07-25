@@ -259,14 +259,12 @@ def submit_soil_analysis():
     db.session.add(soil_analysis_obj)
     db.session.commit()
 
-    # After committing soil_analysis_obj
-    soil_photo_id = data.get("soil_photo_id")
-    if soil_photo_id:
-        from models.soil_photos import SoilPhoto
-        soil_photo = SoilPhoto.query.filter_by(id=soil_photo_id).first()
-        if soil_photo:
-            soil_photo.soil_analysis_id = soil_analysis_obj.id
-            db.session.commit()
+    # After committing soil_analysis_obj, link the most recent SoilPhoto for this user
+    from models.soil_photos import SoilPhoto
+    recent_photo = SoilPhoto.query.filter_by(soil_analysis_id=None).order_by(SoilPhoto.created_at.desc()).first()
+    if recent_photo:
+        recent_photo.soil_analysis_id = soil_analysis_obj.id
+        db.session.commit()
 
     # Step 2: Get weather data
     weather_data = weather_service.get_weather_data(lat, lon)
@@ -415,6 +413,17 @@ def submit_soil_analysis():
             db.session.commit()
             crop_recommendation_ids.append(str(crop_rec_obj.id))
 
+    # Get soil photo information
+    from models.soil_photos import SoilPhoto
+    soil_photo = SoilPhoto.query.filter_by(soil_analysis_id=soil_analysis_obj.id).first()
+    soil_photo_info = None
+    if soil_photo:
+        soil_photo_info = {
+            "id": str(soil_photo.id),
+            "filename": soil_photo.photo_filename,
+            "url": f"/uploads/{soil_photo.photo_filename}" if soil_photo.photo_filename else None
+        }
+
     return jsonify({
         "soil_analysis_record": {
             "id": str(soil_analysis_obj.id),
@@ -426,6 +435,7 @@ def submit_soil_analysis():
         "crop_prediction_id": str(crop_prediction_obj.id),
         "crop_recommendation_ids": crop_recommendation_ids,
         "soil_analysis_summary": soil_analysis,
+        "soil_photo": soil_photo_info,
         "recommendations": crop_result['recommendations'],
         "location": crop_result['location'],
         "weather_summary": crop_result['weather_summary'],
@@ -825,6 +835,13 @@ def get_user_weather_data():
     # Join with SoilAnalysis to filter by user_id (assuming lat/lon match)
     weather = WeatherData.query.join(SoilAnalysis, (WeatherData.latitude == SoilAnalysis.latitude) & (WeatherData.longitude == SoilAnalysis.longitude)).filter(SoilAnalysis.user_id == user_id).all()
     return jsonify([w.to_dict() for w in weather])
+
+@main_bp.route("/uploads/<filename>", methods=["GET"])
+def serve_uploaded_file(filename):
+    """Serve uploaded soil images"""
+    from flask import send_from_directory
+    upload_dir = os.path.join(os.getcwd(), 'uploads')
+    return send_from_directory(upload_dir, filename)
 
 def extract_numeric(value):
     if isinstance(value, (int, float)):

@@ -31,7 +31,7 @@ def create_app():
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
         return send_from_directory(UPLOAD_FOLDER, filename)
-
+    
     # Register blueprints
     app.register_blueprint(main_bp) 
 
