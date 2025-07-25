@@ -117,7 +117,7 @@ def analyze_soil():
         from app.extensions import db
         soil_photo = SoilPhoto(
             soil_analysis_id=None,  # Not linked to a SoilAnalysis yet
-            photo_url=filepath,     # Store the file path
+            photo_url=f"/uploads/{filename}",  # Store the web-accessible path
             photo_filename=filename,
             analysis_result=result['soil_analysis']
         )
@@ -895,13 +895,6 @@ def get_user_weather_data():
     # Join with SoilAnalysis to filter by user_id (assuming lat/lon match)
     weather = WeatherData.query.join(SoilAnalysis, (WeatherData.latitude == SoilAnalysis.latitude) & (WeatherData.longitude == SoilAnalysis.longitude)).filter(SoilAnalysis.user_id == user_id).all()
     return jsonify([w.to_dict() for w in weather])
-
-@main_bp.route("/uploads/<filename>", methods=["GET"])
-def serve_uploaded_file(filename):
-    """Serve uploaded soil images"""
-    from flask import send_from_directory
-    upload_dir = os.path.join(os.getcwd(), 'uploads')
-    return send_from_directory(upload_dir, filename)
 
 def extract_numeric(value):
     if isinstance(value, (int, float)):
