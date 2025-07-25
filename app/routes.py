@@ -140,7 +140,7 @@ def analyze_soil():
                 "classification_method": classification_method
             },
             "soil_photo_id": str(soil_photo.id),
-            "photo_url": filepath,
+            "photo_url": f"/uploads/{filename}",
             "photo_filename": filename
         })
     except Exception as e:
